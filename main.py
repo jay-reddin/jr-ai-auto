@@ -53,6 +53,10 @@ class JRAIControlApp:
         self.performance_manager = get_performance_manager()
         self.performance_monitoring_enabled = True
         
+        # Initialize memory optimization
+        from utils.memory_optimizer import get_memory_optimizer
+        self.memory_optimizer = get_memory_optimizer()
+        
         # Voice system initialization
         self.voice_manager = get_voice_manager()
         self.speech_enabled = True
@@ -107,6 +111,12 @@ class JRAIControlApp:
         register_component_for_optimization(self.voice_manager)
         if hasattr(self.chat_display, 'screenshot_manager'):
             register_component_for_optimization(self.chat_display.screenshot_manager)
+        
+        # Register component memory cleaners
+        from utils.memory_optimizer import register_component_cleaner
+        register_component_cleaner('ChatInterface', self._cleanup_chat_interface)
+        register_component_cleaner('VoiceManager', self._cleanup_voice_manager)
+        register_component_cleaner('ScreenshotManager', self._cleanup_screenshot_manager)
     
     def load_settings(self):
         """Load settings from config manager"""
@@ -363,6 +373,12 @@ class JRAIControlApp:
         self.theme_btn = create_smooth_theme_switcher(controls_frame, self.theme_mode)
         self.theme_btn.pack(side=tk.RIGHT, padx=(0, 8))
         create_md3_tooltip(self.theme_btn, "Toggle dark/light theme")
+        
+        # Performance dashboard button
+        perf_btn = MD3Button(controls_frame, text="📊", style='secondary', width=3,
+                           command=self.open_performance_dashboard)
+        perf_btn.pack(side=tk.RIGHT, padx=(0, 8))
+        create_md3_tooltip(perf_btn, "Open performance dashboard")
         
         # Settings button with MD3 styling
         settings_btn = MD3Button(controls_frame, text="⚙️", style='secondary', width=3,
@@ -696,7 +712,9 @@ class JRAIControlApp:
             self.performance_optimizer.add_optimization_callback(self._on_performance_optimization)
             self.performance_manager.add_optimization_callback(self._on_system_optimization)
             
-            # lf.performance_optimizer.start_monitoring()
+            # Start memory monitoring
+            from utils.memory_optimizer import start_memory_monitoring
+            start_memory_monitoring()
             
             # Schedule periodic optimization checks
             self.schedule_performance_check()
@@ -705,6 +723,72 @@ class JRAIControlApp:
             
         except Exception as e:
             print(f"Error starting performance monitoring: {e}")
+    
+    def _cleanup_chat_interface(self) -> int:
+        """Clean up chat interface memory"""
+        try:
+            if hasattr(self, 'chat_display') and hasattr(self.chat_display, '_cleanup_old_messages'):
+                # Trigger aggressive cleanup if memory pressure is high
+                initial_count = len(self.chat_display.messages) if hasattr(self.chat_display, 'messages') else 0
+                self.chat_display._cleanup_old_messages()
+                final_count = len(self.chat_display.messages) if hasattr(self.chat_display, 'messages') else 0
+                return max(0, initial_count - final_count)
+        except Exception as e:
+            print(f"Error cleaning chat interface: {e}")
+        return 0
+    
+    def _cleanup_voice_manager(self) -> int:
+        """Clean up voice manager memory"""
+        try:
+            if hasattr(self, 'voice_manager'):
+                # Clear speech queue if it's getting large
+                queue_size = 0
+                if hasattr(self.voice_manager, 'speech_queue'):
+                    queue_size = self.voice_manager.speech_queue.qsize()
+                    # Clear queue if it has more than 10 items
+                    if queue_size > 10:
+                        while not self.voice_manager.speech_queue.empty():
+                            try:
+                                self.voice_manager.speech_queue.get_nowait()
+                            except:
+                                break
+                        return queue_size
+        except Exception as e:
+            print(f"Error cleaning voice manager: {e}")
+        return 0
+    
+    def _cleanup_screenshot_manager(self) -> int:
+        """Clean up screenshot manager memory"""
+        try:
+            if hasattr(self, 'chat_display') and hasattr(self.chat_display, 'screenshot_manager'):
+                screenshot_manager = self.chat_display.screenshot_manager
+                
+                # Clean up caches
+                initial_cache_size = 0
+                if hasattr(screenshot_manager, 'image_cache'):
+                    initial_cache_size += len(screenshot_manager.image_cache)
+                if hasattr(screenshot_manager, 'thumbnail_cache'):
+                    initial_cache_size += len(screenshot_manager.thumbnail_cache)
+                if hasattr(screenshot_manager, 'thumbnail_image_cache'):
+                    initial_cache_size += len(screenshot_manager.thumbnail_image_cache)
+                
+                # Force cache cleanup
+                if hasattr(screenshot_manager, '_cleanup_cache'):
+                    screenshot_manager.max_cache_size = max(10, screenshot_manager.max_cache_size // 2)
+                    screenshot_manager._cleanup_cache()
+                
+                final_cache_size = 0
+                if hasattr(screenshot_manager, 'image_cache'):
+                    final_cache_size += len(screenshot_manager.image_cache)
+                if hasattr(screenshot_manager, 'thumbnail_cache'):
+                    final_cache_size += len(screenshot_manager.thumbnail_cache)
+                if hasattr(screenshot_manager, 'thumbnail_image_cache'):
+                    final_cache_size += len(screenshot_manager.thumbnail_image_cache)
+                
+                return max(0, initial_cache_size - final_cache_size)
+        except Exception as e:
+            print(f"Error cleaning screenshot manager: {e}")
+        return 0
     
     def _on_performance_optimization(self, results):
         """Handle performance optimization results"""
@@ -762,7 +846,18 @@ class JRAIControlApp:
         if not self.settings_tab_manager:
             self.settings_tab_manager = SettingsTabManager(self.root, self)
         
-        self.settings_tab_manager.open_settings()    
+        self.settings_tab_manager.open_settings()
+    
+    def open_performance_dashboard(self):
+        """Open the performance dashboard"""
+        try:
+            from utils.performance_dashboard import show_performance_dashboard
+            dashboard = show_performance_dashboard(self.root)
+            dashboard.focus()
+        except Exception as e:
+            print(f"Error opening performance dashboard: {e}")
+            self.add_message("System", f"Error opening performance dashboard: {e}", 
+                           get_theme().colors['error'])    
 
     
     def update_status(self):

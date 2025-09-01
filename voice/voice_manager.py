@@ -103,14 +103,31 @@ class VoiceManager:
         # Performance optimization: pre-allocate audio buffer
         audio_buffer_size = 4096
         
-        # Adaptive timeout based on performance
+        # Adaptive timeout based on performance with CPU monitoring
         base_timeout = 0.3
         adaptive_timeout = base_timeout
+        
+        # Performance monitoring
+        performance_samples = []
+        cpu_threshold = 80.0  # CPU usage threshold for performance adjustment
         
         while self.is_listening:
             try:
                 # Dynamic timeout adjustment based on system performance
                 start_time = time.time()
+                
+                # Monitor CPU usage for adaptive performance
+                try:
+                    import psutil
+                    cpu_percent = psutil.cpu_percent(interval=None)
+                    
+                    # Adjust timeout based on CPU load
+                    if cpu_percent > cpu_threshold:
+                        adaptive_timeout = min(adaptive_timeout * 1.2, 1.5)  # Slower when CPU is busy
+                    else:
+                        adaptive_timeout = max(adaptive_timeout * 0.95, base_timeout)
+                except ImportError:
+                    pass
                 
                 # Listen for audio with optimized timeout and buffer size
                 with self.microphone as source:
@@ -124,12 +141,19 @@ class VoiceManager:
                 
                 # Measure audio capture time for adaptive timeout
                 capture_time = time.time() - start_time
+                performance_samples.append(capture_time)
                 
-                # Adjust timeout based on capture performance
-                if capture_time > adaptive_timeout * 0.8:
-                    adaptive_timeout = min(adaptive_timeout * 1.1, 1.0)
-                else:
-                    adaptive_timeout = max(adaptive_timeout * 0.95, base_timeout)
+                # Keep only recent performance samples
+                if len(performance_samples) > 20:
+                    performance_samples.pop(0)
+                
+                # Adjust timeout based on recent performance
+                if performance_samples:
+                    avg_capture_time = sum(performance_samples) / len(performance_samples)
+                    if avg_capture_time > adaptive_timeout * 0.8:
+                        adaptive_timeout = min(adaptive_timeout * 1.05, 1.0)
+                    else:
+                        adaptive_timeout = max(adaptive_timeout * 0.98, base_timeout)
                 
                 # Process audio recognition asynchronously with thread pool
                 recognition_thread = threading.Thread(
@@ -192,8 +216,27 @@ class VoiceManager:
         batch_size = 3
         batch_timeout = 0.5
         
+        # Advanced performance monitoring
+        processing_times = []
+        queue_sizes = []
+        
         while True:
             try:
+                processing_start = time.time()
+                
+                # Monitor queue size for performance tuning
+                current_queue_size = self.speech_queue.qsize()
+                queue_sizes.append(current_queue_size)
+                if len(queue_sizes) > 50:
+                    queue_sizes.pop(0)
+                
+                # Adaptive batch size based on queue pressure
+                avg_queue_size = sum(queue_sizes) / len(queue_sizes) if queue_sizes else 0
+                if avg_queue_size > 5:
+                    batch_size = min(5, batch_size + 1)  # Increase batch size under pressure
+                elif avg_queue_size < 2:
+                    batch_size = max(2, batch_size - 1)  # Decrease batch size when idle
+                
                 # Collect batch of texts for more efficient processing
                 texts_batch = []
                 batch_start = time.time()
@@ -223,12 +266,30 @@ class VoiceManager:
                     
                     if combined_text:
                         # Use optimized TTS settings for better performance
+                        synthesis_start = time.time()
                         self.tts_engine.say(combined_text)
                         self.tts_engine.runAndWait()
+                        
+                        # Track synthesis performance
+                        synthesis_time = time.time() - synthesis_start
+                        processing_times.append(synthesis_time)
+                        if len(processing_times) > 20:
+                            processing_times.pop(0)
                 
                 # Mark all tasks as done
                 for _ in texts_batch:
                     self.speech_queue.task_done()
+                
+                # Performance monitoring and optimization
+                total_processing_time = time.time() - processing_start
+                
+                # Adaptive timeout based on processing performance
+                if processing_times:
+                    avg_processing_time = sum(processing_times) / len(processing_times)
+                    if avg_processing_time > 2.0:  # If synthesis is slow
+                        batch_timeout = min(1.0, batch_timeout * 1.1)  # Wait longer for batches
+                    else:
+                        batch_timeout = max(0.3, batch_timeout * 0.95)  # Reduce wait time
                 
             except queue.Empty:
                 continue
@@ -251,35 +312,67 @@ class VoiceManager:
         if len(text) > 500:
             text = text[:497] + "..."
         
-        # Clean up text with optimized regex
+        # Clean up text with optimized regex (compiled for better performance)
         import re
+        
+        # Pre-compiled regex patterns for better performance
+        if not hasattr(self, '_regex_patterns'):
+            self._regex_patterns = {
+                'whitespace': re.compile(r'\s+'),
+                'bold': re.compile(r'\*\*(.*?)\*\*'),
+                'italic': re.compile(r'\*(.*?)\*'),
+                'code': re.compile(r'`(.*?)`'),
+                'links': re.compile(r'\[(.*?)\]\(.*?\)'),
+                'numbers': re.compile(r'\b(\d+)\b'),
+                'urls': re.compile(r'https?://[^\s]+')
+            }
+        
         # Remove excessive whitespace
-        text = re.sub(r'\s+', ' ', text.strip())
+        text = self._regex_patterns['whitespace'].sub(' ', text.strip())
         
         # Remove or replace problematic characters for TTS
         text = text.replace('\n', '. ')
         text = text.replace('\t', ' ')
         
+        # Remove URLs for cleaner speech
+        text = self._regex_patterns['urls'].sub('link', text)
+        
         # Remove markdown formatting for better speech
-        text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)  # Bold
-        text = re.sub(r'\*(.*?)\*', r'\1', text)      # Italic
-        text = re.sub(r'`(.*?)`', r'\1', text)        # Code
-        text = re.sub(r'\[(.*?)\]\(.*?\)', r'\1', text)  # Links
+        text = self._regex_patterns['bold'].sub(r'\1', text)  # Bold
+        text = self._regex_patterns['italic'].sub(r'\1', text)  # Italic
+        text = self._regex_patterns['code'].sub(r'\1', text)  # Code
+        text = self._regex_patterns['links'].sub(r'\1', text)  # Links
         
-        # Replace common abbreviations for better pronunciation
-        replacements = {
-            'API': 'A P I',
-            'UI': 'U I',
-            'URL': 'U R L',
-            'JSON': 'J S O N',
-            'HTML': 'H T M L',
-            'CSS': 'C S S',
-            'JS': 'JavaScript',
-            'AI': 'A I'
-        }
+        # Replace common abbreviations for better pronunciation (cached)
+        if not hasattr(self, '_abbreviation_replacements'):
+            self._abbreviation_replacements = {
+                'API': 'A P I',
+                'UI': 'U I',
+                'URL': 'U R L',
+                'JSON': 'J S O N',
+                'HTML': 'H T M L',
+                'CSS': 'C S S',
+                'JS': 'JavaScript',
+                'AI': 'A I',
+                'CPU': 'C P U',
+                'GPU': 'G P U',
+                'RAM': 'R A M',
+                'SQL': 'S Q L',
+                'HTTP': 'H T T P',
+                'HTTPS': 'H T T P S'
+            }
         
-        for abbrev, replacement in replacements.items():
+        for abbrev, replacement in self._abbreviation_replacements.items():
             text = text.replace(abbrev, replacement)
+        
+        # Improve number pronunciation
+        def replace_numbers(match):
+            num = match.group(1)
+            if len(num) > 4:
+                return f"{num[:len(num)-3]} thousand {num[-3:]}" if len(num) <= 6 else num
+            return num
+        
+        text = self._regex_patterns['numbers'].sub(replace_numbers, text)
         
         return text
     

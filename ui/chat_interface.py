@@ -462,7 +462,7 @@ class ChatInterface(MD3Frame):
         """Add a new message to the chat interface with enhanced performance optimization"""
         timestamp = datetime.now()
         
-        # Performance optimization: batch rendering for better responsiveness
+        # Performance optimization: immediate rendering for better UX, batch cleanup
         message_data = {
             'sender': sender,
             'message': message,
@@ -472,54 +472,44 @@ class ChatInterface(MD3Frame):
             'tokens': tokens
         }
         
-        # Add to pending messages for batch processing
-        self.pending_messages.append(message_data)
-        
-        # Schedule batch render if not already scheduled
-        if self.batch_render_timer is None:
-            self.batch_render_timer = self.after(self.batch_render_delay, self._process_pending_messages)
-        
-        # Return placeholder for immediate feedback
-        return None
-    
-    def _process_pending_messages(self):
-        """Process pending messages in batch for better performance"""
-        if not self.pending_messages:
-            self.batch_render_timer = None
-            return
-        
-        render_start = time.time()
-        
-        # Performance optimization: limit visible messages before adding new ones
+        # Check if we need to cleanup before adding new message
         if len(self.messages) >= self.max_visible_messages:
             self._cleanup_old_messages()
         
-        # Process messages in batch
-        new_widgets = []
-        for message_data in self.pending_messages:
-            # Try to reuse widget from pool
-            message_widget = self._get_pooled_message_widget()
-            
-            if message_widget is None:
-                # Create new widget
-                message_widget = ChatMessage(self.scrollable_frame, **message_data)
-            else:
-                # Reconfigure existing widget
-                message_widget.configure_message(**message_data)
-            
-            message_widget.pack(fill=tk.X, pady=2)
-            new_widgets.append(message_widget)
-            
-            # Store message reference
-            self.messages.append(message_widget)
-            
-            # Cache message data for potential recreation
-            message_id = len(self.messages) - 1
-            self.message_cache[message_id] = message_data
+        # Create message widget immediately for better responsiveness
+        message_widget = self._create_message_widget(message_data)
         
-        # Clear pending messages
-        self.pending_messages.clear()
-        self.batch_render_timer = None
+        # Add to pending messages for batch processing optimizations
+        self.pending_messages.append(message_data)
+        
+        # Schedule batch optimization if not already scheduled
+        if self.batch_render_timer is None:
+            self.batch_render_timer = self.after(self.batch_render_delay, self._process_pending_optimizations)
+        
+        return message_widget
+    
+    def _create_message_widget(self, message_data: Dict[str, Any]):
+        """Create a message widget immediately for better responsiveness"""
+        render_start = time.time()
+        
+        # Try to reuse widget from pool
+        message_widget = self._get_pooled_message_widget()
+        
+        if message_widget is None:
+            # Create new widget
+            message_widget = ChatMessage(self.scrollable_frame, **message_data)
+        else:
+            # Reconfigure existing widget
+            message_widget.configure_message(**message_data)
+        
+        message_widget.pack(fill=tk.X, pady=2)
+        
+        # Store message reference
+        self.messages.append(message_widget)
+        
+        # Cache message data for potential recreation
+        message_id = len(self.messages) - 1
+        self.message_cache[message_id] = message_data
         
         # Record render time for performance monitoring
         render_time = time.time() - render_start
@@ -530,7 +520,131 @@ class ChatInterface(MD3Frame):
         # Optimized scrolling - use after_idle for better performance
         self.after_idle(self._scroll_to_bottom)
         
-        return new_widgets
+        return message_widget
+    
+    def _process_pending_optimizations(self):
+        """Process pending optimizations in batch for better performance"""
+        if not self.pending_messages:
+            self.batch_render_timer = None
+            return
+        
+        optimization_start = time.time()
+        
+        # Clear pending messages (they've already been rendered)
+        self.pending_messages.clear()
+        self.batch_render_timer = None
+        
+        # Perform background optimizations
+        self._optimize_message_rendering()
+        self._optimize_memory_usage()
+        
+        # Record optimization time
+        optimization_time = time.time() - optimization_start
+        if hasattr(self, 'optimization_times'):
+            self.optimization_times.append(optimization_time)
+            if len(self.optimization_times) > 20:
+                self.optimization_times.pop(0)
+        else:
+            self.optimization_times = [optimization_time]
+    
+    def _optimize_message_rendering(self):
+        """Optimize message rendering performance"""
+        # Implement virtual scrolling for large message counts
+        if len(self.messages) > self.lazy_load_threshold:
+            self._implement_virtual_scrolling()
+        
+        # Optimize image loading for screenshots
+        self._optimize_screenshot_loading()
+    
+    def _implement_virtual_scrolling(self):
+        """Implement virtual scrolling for better performance with large message counts"""
+        if not self.virtual_scrolling_enabled:
+            return
+        
+        # Get current scroll position
+        try:
+            scroll_top = self.canvas.canvasy(0)
+            scroll_bottom = scroll_top + self.canvas.winfo_height()
+            
+            # Calculate which messages should be visible
+            message_height = 100  # Estimated message height
+            start_index = max(0, int(scroll_top / message_height) - self.viewport_buffer)
+            end_index = min(len(self.messages), int(scroll_bottom / message_height) + self.viewport_buffer)
+            
+            # Update viewport if changed
+            if start_index != self.viewport_start or end_index != self.viewport_end:
+                self.viewport_start = start_index
+                self.viewport_end = end_index
+                self._update_visible_messages()
+                
+        except Exception as e:
+            print(f"Error in virtual scrolling: {e}")
+    
+    def _update_visible_messages(self):
+        """Update which messages are visible for virtual scrolling"""
+        for i, message in enumerate(self.messages):
+            if self.viewport_start <= i <= self.viewport_end:
+                if not message.winfo_viewable():
+                    message.pack(fill=tk.X, pady=2)
+            else:
+                if message.winfo_viewable():
+                    message.pack_forget()
+    
+    def _optimize_screenshot_loading(self):
+        """Optimize screenshot thumbnail loading"""
+        # Preload thumbnails for visible messages
+        visible_messages = self.messages[self.viewport_start:self.viewport_end]
+        
+        for message in visible_messages:
+            if hasattr(message, 'screenshot_id') and message.screenshot_id:
+                # Trigger background thumbnail loading
+                if hasattr(message, 'screenshot_manager'):
+                    message.screenshot_manager.get_cached_thumbnail_image(message.screenshot_id)
+    
+    def _optimize_memory_usage(self):
+        """Optimize memory usage for the chat interface"""
+        # Clean up old message widgets more aggressively under memory pressure
+        try:
+            import psutil
+            memory_percent = psutil.virtual_memory().percent
+            
+            if memory_percent > 80:  # High memory usage
+                # More aggressive cleanup
+                if len(self.messages) > self.max_visible_messages // 2:
+                    cleanup_count = len(self.messages) // 3
+                    self._cleanup_messages(cleanup_count)
+            elif memory_percent > 60:  # Moderate memory usage
+                # Standard cleanup
+                if len(self.messages) > self.max_visible_messages:
+                    self._cleanup_old_messages()
+                    
+        except ImportError:
+            # Fallback to standard cleanup if psutil not available
+            if len(self.messages) > self.max_visible_messages:
+                self._cleanup_old_messages()
+    
+    def _cleanup_messages(self, count: int):
+        """Clean up a specific number of old messages"""
+        if count <= 0 or count >= len(self.messages):
+            return
+        
+        for i in range(count):
+            if self.messages:
+                old_message = self.messages.pop(0)
+                self._return_to_pool(old_message)
+        
+        # Clean up corresponding cache entries
+        keys_to_remove = [k for k in self.message_cache.keys() if k < count]
+        for key in keys_to_remove:
+            self.message_cache.pop(key, None)
+        
+        # Renumber remaining cache entries
+        new_cache = {}
+        for old_key, value in self.message_cache.items():
+            new_key = old_key - count
+            if new_key >= 0:
+                new_cache[new_key] = value
+        self.message_cache = new_cache
     
     def _get_pooled_message_widget(self):
         """Get a reusable message widget from the pool"""

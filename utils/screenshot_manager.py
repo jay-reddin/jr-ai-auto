@@ -121,10 +121,30 @@ class ScreenshotManager:
             # Create thumbnail with optimized processing
             thumbnail_size = self.THUMBNAIL_SIZES[size]
             
-            # Optimize thumbnail generation based on original image size
+            # Optimize thumbnail generation based on original image size and system performance
             original_size = img.size
             scale_factor = min(thumbnail_size[0] / original_size[0], 
                              thumbnail_size[1] / original_size[1])
+            
+            # Performance optimization: check system resources
+            try:
+                import psutil
+                cpu_percent = psutil.cpu_percent(interval=None)
+                memory_percent = psutil.virtual_memory().percent
+                
+                # Adjust processing based on system load
+                if cpu_percent > 80 or memory_percent > 80:
+                    # Use faster but lower quality processing under high load
+                    resampling_method = Image.Resampling.BILINEAR
+                    save_quality = 70 if size == 'small' else 80
+                else:
+                    # Use higher quality processing when system is not busy
+                    resampling_method = Image.Resampling.LANCZOS
+                    save_quality = 75 if size == 'small' else 85
+            except ImportError:
+                # Fallback if psutil not available
+                resampling_method = Image.Resampling.LANCZOS
+                save_quality = 75 if size == 'small' else 85
             
             # Skip processing if image is already small enough
             if scale_factor >= 0.9:
@@ -133,30 +153,29 @@ class ScreenshotManager:
                 # Use optimized resampling for better performance
                 new_size = (int(original_size[0] * scale_factor), 
                            int(original_size[1] * scale_factor))
-                thumbnail_img = img.resize(new_size, Image.Resampling.LANCZOS)
+                thumbnail_img = img.resize(new_size, resampling_method)
             
             # Generate unique filename for thumbnail
             screenshot_id = str(uuid.uuid4())
             thumbnail_filename = f"{screenshot_id}_{size}.jpg"
             thumbnail_path = os.path.join(self.thumbnails_dir, thumbnail_filename)
             
-            # Save thumbnail with optimized compression settings
+            # Save thumbnail with adaptive compression settings
             save_kwargs = {
                 'format': 'JPEG',
-                'quality': 85,  # Slightly higher quality
+                'quality': save_quality,
                 'optimize': True,
                 'progressive': True
             }
             
-            # Use different quality for different sizes
-            if size == 'small':
-                save_kwargs['quality'] = 75
-            elif size == 'large':
-                save_kwargs['quality'] = 90
+            # Additional quality adjustments based on size
+            if size == 'large':
+                save_kwargs['quality'] = min(90, save_quality + 10)
             
             thumbnail_img.save(thumbnail_path, **save_kwargs)
             
             # Store metadata with additional performance info
+            generation_time = time.time() - generation_start
             self.metadata[screenshot_id] = {
                 'original_path': image_path,
                 'thumbnail_path': thumbnail_path,
@@ -164,8 +183,10 @@ class ScreenshotManager:
                 'dimensions': thumbnail_img.size,
                 'created_at': datetime.now().isoformat(),
                 'file_size': os.path.getsize(thumbnail_path),
-                'generation_time': time.time() - generation_start,
-                'scale_factor': scale_factor
+                'generation_time': generation_time,
+                'scale_factor': scale_factor,
+                'resampling_method': str(resampling_method),
+                'save_quality': save_quality
             }
             self._save_metadata()
             
@@ -177,10 +198,15 @@ class ScreenshotManager:
                 self._cleanup_cache()
             
             # Record generation time for performance monitoring
-            generation_time = time.time() - generation_start
             self.generation_times.append(generation_time)
             if len(self.generation_times) > 100:
                 self.generation_times.pop(0)
+            
+            # Adaptive cache size based on performance
+            if generation_time > 1.0:  # Slow generation
+                self.max_cache_size = min(50, self.max_cache_size + 5)  # Increase cache
+            elif generation_time < 0.2:  # Fast generation
+                self.max_cache_size = max(20, self.max_cache_size - 2)  # Decrease cache
             
             return screenshot_id
                 
