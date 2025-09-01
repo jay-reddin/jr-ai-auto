@@ -1,17 +1,42 @@
 # JR AI Control
 
-JR AI Control is an advanced automation agent designed to perform precise and efficient system actions on behalf of the user using the PyAutoGUI library. It can automate keyboard, mouse, and screen interactions while ensuring safety and accuracy in every task.
+JR AI Control is an advanced AI-powered automation assistant that helps you control your Windows computer using natural language commands. Featuring a modern Material Design 3 interface, voice interaction capabilities, screenshot analysis, and comprehensive automation tools powered by Google's Gemini AI model.
 
 ## Features
 
-- **Windows-optimized automation** with mouse movements, clicks, and keyboard inputs
-- **Google Gemini-powered** screen analysis and task execution
-- **Simplified setup** with single API key requirement (Google API Key only)
-- **Native Windows compatibility** with optimized font rendering and system interactions
-- **Reduced memory footprint** with streamlined dependencies
-- **Graceful error handling** and user feedback
-- **Maximum precision** to avoid unintentional actions
-- **Screenshot management** with coordinate grid overlay for accurate positioning
+### 🎯 **Core Automation**
+- **Windows-optimized automation** with precise mouse movements, clicks, and keyboard inputs
+- **Google Gemini-powered** screen analysis and intelligent task execution
+- **Screenshot analysis** with thumbnail previews and click-to-expand functionality
+- **Coordinate grid overlay** for accurate positioning and visual feedback
+
+### 🎤 **Voice Interaction**
+- **Speech Recognition** - Speak commands naturally using Windows Speech Recognition
+- **Text-to-Speech** - Hear AI responses with customizable voice settings
+- **Hands-free Operation** - Continuous listening mode for seamless interaction
+- **Voice Controls** - Microphone button with visual feedback and status indicators
+
+### 🎨 **Modern Interface**
+- **Material Design 3** - Beautiful, modern interface with smooth animations
+- **Dark/Light Themes** - Seamless theme switching with system integration
+- **Chat Bubbles** - Modern speech bubble interface with message actions
+- **Token Tracking** - Monitor AI usage with per-message and total token counts
+
+### 🔧 **Advanced Settings**
+- **Tabbed Settings** - Comprehensive settings organized in AI, UI, and About tabs
+- **Real-time Updates** - Settings apply immediately without restart
+- **Voice Customization** - Adjust speech rate, volume, and voice selection
+- **Screenshot Configuration** - Customizable thumbnail sizes and wait durations
+
+### 📱 **Smart Notifications**
+- **Task Completion Alerts** - Windows toast notifications for completed tasks
+- **Progress Updates** - Real-time status updates for long-running operations
+- **Notification Queue** - Intelligent notification management with priority support
+
+### 🔒 **Security & Privacy**
+- **Local Processing** - Voice recognition and TTS processed locally on Windows
+- **Secure API Key Management** - Encrypted storage with connection testing
+- **Privacy Controls** - User control over data retention and screenshot storage
 
 ## Installation (Windows)
 
@@ -52,46 +77,136 @@ JR AI Control is an advanced automation agent designed to perform precise and ef
 
    ```plaintext
    GOOGLE_API_KEY=<YOUR_GEMINI_API_KEY>
-   VERSION=0.9.2
-   LAST_CHANGES=["Migrated to Gemini-only operation", "Windows optimization", "Removed Azure OpenAI dependencies"]
+   VERSION=1.0.0
+   LAST_CHANGES=["Enhanced Material Design 3 UI", "Voice interaction system", "Screenshot thumbnails", "Comprehensive settings management"]
    ```
 
-   **Note:** This application now uses Google Gemini exclusively for optimal Windows performance and simplified setup.
+4. **Configure Windows Speech Recognition (Optional):**
+
+   For voice features, ensure Windows Speech Recognition is enabled:
+   - Go to Windows Settings → Privacy & Security → Speech
+   - Enable "Online speech recognition"
+   - Go to Time & Language → Speech
+   - Set up speech recognition if not already configured
+
+   **Note:** This application uses Google Gemini exclusively with enhanced Windows integration and modern UI features.
 
 ## Usage
 
-1. **Run the Application:**
+### Quick Start
 
-   You can run the application using the following command:
+1. **Launch the Application:**
 
    ```cmd
    python main.py
    ```
 
-   This will use the Google Gemini model and enable the floating UI by default.
+   The application will open with the modern Material Design 3 interface.
 
-2. **Optional Arguments:**
+2. **Initial Setup:**
+   - Click the **Settings** button in the top toolbar
+   - Go to the **AI** tab and enter your Google API key
+   - Test the connection using the "Test API Key" button
+   - Configure voice settings if desired
 
-    - **Model Selection:**
-    The application now uses Google Gemini exclusively. You can explicitly specify the model if needed:
+3. **Start Automating:**
+   - Type commands in natural language: "Take a screenshot and tell me what you see"
+   - Use voice input by clicking the microphone button
+   - View screenshot thumbnails inline with chat messages
+   - Monitor token usage in the header display
 
-    ```cmd
-    python main.py --model gemini
-    ```
+### Command Line Options
 
-    - **Floating UI:**
-    The TKinter UI will be floating and remain on top of the screen by default. You can disable this behavior by passing the `--float-ui` flag as `0`. By default it will be `1`.
+```cmd
+# Default run with enhanced UI
+python main.py
 
-    ```cmd
-    python main.py --float-ui 0
-    ```
+# Specify Gemini model explicitly
+python main.py --model gemini
 
-### Windows-Specific Features
+# Disable floating UI behavior
+python main.py --float-ui 0
 
-- **Optimized font rendering** for Windows systems
-- **Windows-compatible PyAutoGUI operations** with proper key combinations
-- **Reduced memory footprint** with streamlined dependencies
-- **Native Windows font fallbacks** for coordinate grid display
+# Enable debug mode
+python main.py --debug
+```
+
+### Interface Overview
+
+#### **Header Section**
+- **Application Title**: "JR AI Control" with version info
+- **Model Display**: Shows current AI model (e.g., "gemini-2.0-flash-exp")
+- **Token Counter**: Real-time token usage tracking
+- **Theme Toggle**: Switch between dark/light themes
+- **Settings Button**: Access comprehensive settings
+
+#### **Chat Interface**
+- **Speech Bubbles**: Modern chat interface with user (right) and AI (left) messages
+- **Screenshot Thumbnails**: Inline preview images with click-to-expand
+- **Message Actions**: Resend, copy, and delete buttons for each message
+- **Voice Input**: Microphone button with visual feedback
+
+#### **Input Section**
+- **Text Input**: Type commands and questions
+- **Microphone Button**: Voice input with "Listening..." indicator
+- **Send Button**: Submit messages to AI
+
+### Voice Interaction
+
+#### **Enable Voice Features**
+1. Open **Settings** → **AI** tab
+2. Toggle "Enable Speech" to activate voice features
+3. Configure voice settings (rate, volume, voice selection)
+
+#### **Using Voice Commands**
+- Click microphone button (turns red when listening)
+- Speak naturally: "Open calculator and perform 25 + 37"
+- AI responds both in text and speech
+- Use "Mute Speech" to disable audio while keeping recognition
+
+### Example Commands
+
+```
+# Screen Analysis
+"Take a screenshot and describe what applications are open"
+"What do you see on my screen right now?"
+
+# Application Control  
+"Open the calculator application"
+"Switch to Google Chrome"
+"Close the current window"
+
+# Automation Tasks
+"Click on the start button"
+"Type 'Hello World' in the current text field"
+"Press Alt+Tab to switch windows"
+"Scroll down on this webpage"
+
+# File Management
+"Open File Explorer and navigate to Documents"
+"Create a new folder called 'Projects'"
+"Find and open the latest Word document"
+```
+
+### Enhanced Features
+
+#### **Screenshot Thumbnails**
+- Automatic thumbnail generation for all screenshots
+- Configurable sizes (small/medium/large) in UI settings
+- Click thumbnails to view full-size images
+- Efficient caching and storage management
+
+#### **Token Tracking**
+- Per-message token counts displayed with each interaction
+- Running total in header with persistent storage
+- Usage statistics in About tab with reset options
+- Cost estimation and usage analytics
+
+#### **Notification System**
+- Windows toast notifications for task completion
+- Progress updates for long-running operations
+- Configurable notification settings and duration
+- Non-intrusive notification queue management
 
 
 ## Examples
@@ -122,49 +237,87 @@ It's a multi-modal AI Agent powered by Google Gemini running with a constant scr
 - **Streamlined dependencies** focused only on Gemini and Windows compatibility
 
 
-## Troubleshooting (Windows)
+## Documentation
 
-### Common Issues
+### Complete Guides
+- **[User Manual](docs/USER_MANUAL.md)** - Comprehensive guide to all features
+- **[Voice Interaction Guide](docs/VOICE_INTERACTION_GUIDE.md)** - Detailed voice setup and usage
+- **[Settings Configuration Guide](docs/SETTINGS_CONFIGURATION_GUIDE.md)** - Complete settings reference
+- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Developer Documentation](docs/DEVELOPER_DOCUMENTATION.md)** - Technical documentation
 
-1. **Font rendering problems:**
-   - The application automatically falls back to Windows system fonts if custom fonts are unavailable
-   - Coordinate grids should display correctly with Arial or default Windows fonts
+### Quick Reference
 
-2. **PyAutoGUI issues:**
-   - Ensure your Windows system allows automation (some security software may block it)
-   - The application is optimized for Windows key combinations and screen handling
+#### **Keyboard Shortcuts**
+- `Ctrl+Enter` - Send message
+- `Ctrl+M` - Toggle microphone
+- `Ctrl+T` - Toggle theme
+- `Ctrl+S` - Open settings
+- `Escape` - Stop current processing
 
-3. **API Key issues:**
-   - Make sure your `GOOGLE_API_KEY` is valid and has access to Gemini models
-   - Check that the `.env` file is in the root directory of the project
+#### **Voice Commands**
+- Natural language works best: "Take a screenshot and tell me what you see"
+- Be specific: "Click the blue Save button in the top toolbar"
+- Use context: "What applications are currently open on my screen?"
 
-4. **Dependencies:**
-   - If installation fails, try updating pip: `python -m pip install --upgrade pip`
-   - Ensure you're using Python 3.8 or later
+## Troubleshooting
 
-## Configuration Examples
+### Quick Fixes
 
-### Basic .env file:
-```plaintext
-GOOGLE_API_KEY=your_actual_gemini_api_key_here
-VERSION=0.9.2
-LAST_CHANGES=["Migrated to Gemini-only operation", "Windows optimization", "Removed Azure OpenAI dependencies"]
-```
-
-### Running with different options:
+#### **Application Won't Start**
 ```cmd
-# Default run (Gemini model, floating UI)
-python main.py
+# Update dependencies
+pip install -r requirements.txt --force-reinstall
 
-# Explicit Gemini model
-python main.py --model gemini
-
-# Disable floating UI
-python main.py --float-ui 0
-
-# Combine options
-python main.py --model gemini --float-ui 0
+# Run as administrator
+# Right-click application → "Run as administrator"
 ```
+
+#### **Voice Features Not Working**
+1. Check Windows Speech Recognition is enabled
+2. Verify microphone permissions in Windows Privacy settings
+3. Test microphone in other applications
+4. Update audio drivers
+
+#### **API Connection Issues**
+1. Verify Google API key in Settings → AI tab
+2. Test API key using the "Test API Key" button
+3. Check internet connection
+4. Ensure Gemini API is enabled in Google Cloud Console
+
+#### **Screenshot Problems**
+1. Run application as administrator
+2. Check display scaling settings
+3. Update graphics drivers
+4. Verify PyAutoGUI permissions
+
+### Getting Help
+
+For detailed troubleshooting, see the [Troubleshooting Guide](docs/TROUBLESHOOTING.md) or contact support.
+
+## Configuration
+
+### Environment Variables
+```plaintext
+# .env file
+GOOGLE_API_KEY=your_actual_gemini_api_key_here
+VERSION=1.0.0
+LAST_CHANGES=["Enhanced Material Design 3 UI", "Voice interaction system", "Screenshot thumbnails"]
+
+# Optional debug settings
+JR_AI_DEBUG=true
+JR_AI_LOG_LEVEL=DEBUG
+```
+
+### Settings File (config.json)
+The application automatically creates and manages a `config.json` file with your preferences:
+- API key and model selection
+- Theme and UI preferences  
+- Voice and speech settings
+- Screenshot and notification configuration
+- Token usage statistics
+
+Settings can be exported/imported through the About tab for backup or sharing.
 
 ## Contributing
 
