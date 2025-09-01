@@ -1,4 +1,3 @@
-from langchain_openai import AzureChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 import dotenv
@@ -13,21 +12,19 @@ TEXT_COLOR = "#1C1C1C"
 FONT = "Helvetica 14"
 FONT_BOLD = "Helvetica 13 bold"
 
-OPENAI = AzureChatOpenAI(
-    openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
-    azure_deployment=os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT_NAME"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-)
-
-GEMINI = ChatGoogleGenerativeAI(
-    model="gemini-1.5-pro-latest",
-    google_api_key=os.getenv("GOOGLE_API_KEY"),
-)
-
-MODELS = {
-    "gemini": GEMINI,
-    "openai": OPENAI
-}
+# Only initialize if we have a valid API key
+api_key = os.getenv("GOOGLE_API_KEY")
+if api_key and api_key != "your_api_key_here":
+    GEMINI = ChatGoogleGenerativeAI(
+        model="gemini-2.0-flash-exp",
+        google_api_key=api_key,
+    )
+    MODELS = {
+        "gemini": GEMINI
+    }
+else:
+    GEMINI = None
+    MODELS = {}
 
 PREFIX = """
 YOU ARE AN EXPERT AUTOMATION AGENT WITH FULL ACCESS TO THE PyAutoGUI LIBRARY in the variable `pg`, SPECIALIZED IN PERFORMING PRECISE AND EFFICIENT SYSTEM ACTIONS ON BEHALF OF THE USER. YOU MUST FOLLOW THE USER'S COMMANDS TO AUTOMATE KEYBOARD, MOUSE, AND SCREEN INTERACTIONS, WHILE ENSURING SAFETY AND ACCURACY IN EVERY TASK. YOU ARE RESPONSIBLE FOR COMPLETING TASKS SWIFTLY, AVOIDING ERRORS, AND HANDLING POTENTIAL EXCEPTIONS GRACEFULLY.

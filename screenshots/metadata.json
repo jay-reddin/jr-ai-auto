@@ -1,0 +1,79 @@
+{
+  "20b3ad03-553e-4556-b18d-4668c6334835": {
+    "original_path": "screenshot.png",
+    "thumbnail_path": "screenshots\\thumbnails\\20b3ad03-553e-4556-b18d-4668c6334835_medium.jpg",
+    "thumbnail_size": "medium",
+    "dimensions": [
+      150,
+      112
+    ],
+    "created_at": "2025-09-01T13:32:04.040848",
+    "file_size": 4407
+  },
+  "fece1fae-51e4-4ea4-8155-eef60acae26e": {
+    "original_path": "screenshot.png",
+    "thumbnail_path": "screenshots\\thumbnails\\fece1fae-51e4-4ea4-8155-eef60acae26e_medium.jpg",
+    "thumbnail_size": "medium",
+    "dimensions": [
+      150,
+      112
+    ],
+    "created_at": "2025-09-01T13:32:04.509495",
+    "file_size": 4556
+  },
+  "1f6dbf10-bb44-4fba-9b43-0ef1ac5e651b": {
+    "original_path": "screenshot.png",
+    "thumbnail_path": "screenshots\\thumbnails\\1f6dbf10-bb44-4fba-9b43-0ef1ac5e651b_medium.jpg",
+    "thumbnail_size": "medium",
+    "dimensions": [
+      150,
+      112
+    ],
+    "created_at": "2025-09-01T13:32:04.918535",
+    "file_size": 4500
+  },
+  "4ddaada1-b413-45a1-9d91-4811b0a18a50": {
+    "original_path": "screenshot.png",
+    "thumbnail_path": "screenshots\\thumbnails\\4ddaada1-b413-45a1-9d91-4811b0a18a50_medium.jpg",
+    "thumbnail_size": "medium",
+    "dimensions": [
+      150,
+      112
+    ],
+    "created_at": "2025-09-01T13:33:35.121085",
+    "file_size": 4474
+  },
+  "f84e8398-dcf1-4404-a5fc-baa9bd0df48a": {
+    "original_path": "screenshot.png",
+    "thumbnail_path": "screenshots\\thumbnails\\f84e8398-dcf1-4404-a5fc-baa9bd0df48a_medium.jpg",
+    "thumbnail_size": "medium",
+    "dimensions": [
+      150,
+      112
+    ],
+    "created_at": "2025-09-01T13:42:32.913371",
+    "file_size": 4319
+  },
+  "2e95c1f4-f917-41fa-98d1-31a293613013": {
+    "original_path": "screenshot.png",
+    "thumbnail_path": "screenshots\\thumbnails\\2e95c1f4-f917-41fa-98d1-31a293613013_medium.jpg",
+    "thumbnail_size": "medium",
+    "dimensions": [
+      150,
+      112
+    ],
+    "created_at": "2025-09-01T13:42:33.185461",
+    "file_size": 4346
+  },
+  "89bd9d79-36b1-40b4-bb27-4ca9eedadde7": {
+    "original_path": "screenshot.png",
+    "thumbnail_path": "screenshots\\thumbnails\\89bd9d79-36b1-40b4-bb27-4ca9eedadde7_medium.jpg",
+    "thumbnail_size": "medium",
+    "dimensions": [
+      150,
+      112
+    ],
+    "created_at": "2025-09-01T13:42:33.587791",
+    "file_size": 4374
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "total_tokens": 146,
+  "message_tokens": {
+    "2be3b2fa-e874-473c-ae7c-93f929b7567c": {
+      "input_tokens": 7,
+      "output_tokens": 47,
+      "total_tokens": 54,
+      "model": "gemini-2.0-flash-exp"
+    },
+    "d52021b0-505e-4311-aff9-50cc71ed0003": {
+      "input_tokens": 4,
+      "output_tokens": 5,
+      "total_tokens": 9,
+      "model": "gemini-2.0-flash-exp"
+    },
+    "test-message-123": {
+      "input_tokens": 2,
+      "output_tokens": 2,
+      "total_tokens": 4,
+      "model": "gemini"
+    },
+    "test-1": {
+      "input_tokens": 1,
+      "output_tokens": 2,
+      "total_tokens": 3,
+      "model": "gemini"
+    },
+    "req-test-1": {
+      "input_tokens": 2,
+      "output_tokens": 2,
+      "total_tokens": 4,
+      "model": "gemini"
+    },
+    "req-test-2": {
+      "input_tokens": 3,
+      "output_tokens": 4,
+      "total_tokens": 7,
+      "model": "gemini"
+    },
+    "running-test-0": {
+      "input_tokens": 2,
+      "output_tokens": 2,
+      "total_tokens": 4,
+      "model": "gemini"
+    },
+    "running-test-1": {
+      "input_tokens": 3,
+      "output_tokens": 9,
+      "total_tokens": 12,
+      "model": "gemini"
+    },
+    "running-test-2": {
+      "input_tokens": 4,
+      "output_tokens": 11,
+      "total_tokens": 15,
+      "model": "gemini"
+    },
+    "req-7-3-test": {
+      "input_tokens": 8,
+      "output_tokens": 14,
+      "total_tokens": 22,
+      "model": "gemini"
+    },
+    "req-7-4-test": {
+      "input_tokens": 5,
+      "output_tokens": 7,
+      "total_tokens": 12,
+      "model": "gemini"
+    }
+  }
+}
