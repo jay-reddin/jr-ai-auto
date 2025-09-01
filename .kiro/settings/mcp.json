@@ -1,0 +1,12 @@
+{
+    "mcpServers": {
+        "context7": {
+            "url": "https://mcp.context7.com/mcp",
+            "env": {
+                "CONTEXT7_API_KEY": "ctx7sk-be3cfc0a-c1c5-4d27-915e-c7bd1d43b1c2"
+            },
+            "disabled": false,
+            "autoApprove": []
+        }
+    }
+}

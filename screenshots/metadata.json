@@ -75,5 +75,20 @@
     ],
     "created_at": "2025-09-01T13:42:33.587791",
     "file_size": 4374
+  },
+  "aa266413-470f-496c-9df4-ed48ad60ad5e": {
+    "original_path": "screenshot.png",
+    "thumbnail_path": "screenshots\\thumbnails\\aa266413-470f-496c-9df4-ed48ad60ad5e_medium.jpg",
+    "thumbnail_size": "medium",
+    "dimensions": [
+      150,
+      84
+    ],
+    "created_at": "2025-09-01T18:36:08.099448",
+    "file_size": 3620,
+    "generation_time": 0.18067574501037598,
+    "scale_factor": 0.10980966325036604,
+    "resampling_method": "2",
+    "save_quality": 80
   }
 }

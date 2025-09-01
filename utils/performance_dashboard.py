@@ -438,7 +438,7 @@ class PerformanceDashboard(tk.Toplevel):
         self.geometry("800x600")
         
         # Apply theme
-        self.theme = apply_md3_theme(self, get_theme().mode)
+        self.theme = apply_md3_theme(self, get_theme().theme_mode)
         
         # Make window resizable
         self.resizable(True, True)

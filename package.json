@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@material/web": "^2.4.0",
+    "mcp-remote": "^0.1.29"
+  }
+}

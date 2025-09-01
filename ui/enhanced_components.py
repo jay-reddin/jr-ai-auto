@@ -359,17 +359,43 @@ def create_md3_tooltip(widget, text):
 
 def animate_widget_transition(widget, property_name, start_value, end_value, duration=300, steps=20):
     """Animate a widget property transition"""
-    step_size = (end_value - start_value) / steps
-    step_duration = duration // steps
-    
-    def animate_step(current_step):
-        if current_step <= steps:
-            current_value = start_value + (step_size * current_step)
+    # Handle color string values by using discrete steps instead of interpolation
+    if isinstance(start_value, str) and isinstance(end_value, str):
+        # For color strings, just alternate between start and end values
+        step_duration = duration // 2
+        
+        def color_animate_step(use_end_color):
             try:
-                widget.configure(**{property_name: current_value})
-                widget.after(step_duration, lambda: animate_step(current_step + 1))
+                color = end_value if use_end_color else start_value
+                widget.configure(**{property_name: color})
+                if not use_end_color:
+                    widget.after(step_duration, lambda: color_animate_step(True))
             except tk.TclError:
                 # Animation interrupted or widget destroyed
                 pass
+        
+        color_animate_step(False)
+        return
     
-    animate_step(0)
+    # Handle numeric values with interpolation
+    try:
+        step_size = (end_value - start_value) / steps
+        step_duration = duration // steps
+        
+        def animate_step(current_step):
+            if current_step <= steps:
+                current_value = start_value + (step_size * current_step)
+                try:
+                    widget.configure(**{property_name: current_value})
+                    widget.after(step_duration, lambda: animate_step(current_step + 1))
+                except tk.TclError:
+                    # Animation interrupted or widget destroyed
+                    pass
+        
+        animate_step(0)
+    except (TypeError, ValueError):
+        # If we can't animate, just set the end value
+        try:
+            widget.configure(**{property_name: end_value})
+        except tk.TclError:
+            pass

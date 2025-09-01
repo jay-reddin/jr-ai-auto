@@ -801,6 +801,23 @@ class JRAIControlApp:
         except Exception as e:
             print(f"Error handling performance optimization: {e}")
     
+    def _on_system_optimization(self, results):
+        """Handle system optimization results"""
+        try:
+            cpu_improvement = results.get('cpu_optimization', {}).get('improvement_percent', 0)
+            memory_freed = results.get('memory_optimization', {}).get('memory_freed_mb', 0)
+            
+            if cpu_improvement > 5 or memory_freed > 5:  # Show notification for meaningful improvements
+                message = f"System optimization completed."
+                if cpu_improvement > 5:
+                    message += f" CPU performance improved by {cpu_improvement:.1f}%."
+                if memory_freed > 5:
+                    message += f" {memory_freed:.1f}MB memory freed."
+                
+                self.add_message("System", message, get_theme().colors['secondary'])
+        except Exception as e:
+            print(f"Error handling system optimization: {e}")
+    
     def schedule_performance_check(self):
         """Schedule periodic performance checks"""
         try:

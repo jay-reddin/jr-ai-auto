@@ -1,5 +1,5 @@
 {
-  "total_tokens": 146,
+  "total_tokens": 23,
   "message_tokens": {
     "2be3b2fa-e874-473c-ae7c-93f929b7567c": {
       "input_tokens": 7,
@@ -66,6 +66,18 @@
       "output_tokens": 7,
       "total_tokens": 12,
       "model": "gemini"
+    },
+    "537fa781-9ad2-4a7c-8a0e-5d6ce33b13be": {
+      "input_tokens": 0,
+      "output_tokens": 11,
+      "total_tokens": 11,
+      "model": "gemini-2.0-flash-exp"
+    },
+    "ee516c68-7714-44ce-aa1e-c1d871076c91": {
+      "input_tokens": 3,
+      "output_tokens": 9,
+      "total_tokens": 12,
+      "model": "gemini-2.0-flash-exp"
     }
   }
 }

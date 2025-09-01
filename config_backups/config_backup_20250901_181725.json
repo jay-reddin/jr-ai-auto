@@ -1,0 +1,12 @@
+{
+  "api_key": "modified_key",
+  "model": "gemini-1.5-pro",
+  "theme_mode": "light",
+  "speech_enabled": false,
+  "speech_muted": true,
+  "screenshot_size": "small",
+  "screenshot_wait_duration": 5,
+  "notification_enabled": false,
+  "font_size": 18,
+  "window_opacity": 0.8
+}

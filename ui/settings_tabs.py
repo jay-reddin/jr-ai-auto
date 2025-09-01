@@ -15,6 +15,9 @@ from ui.enhanced_components import MD3Frame, MD3Card, MD3Button, MD3Entry, creat
 from utils.token_tracker import get_token_tracker
 from voice.voice_manager import get_voice_manager
 
+# Google Generative AI will be imported only when needed
+GENAI_AVAILABLE = True
+
 
 class SettingsTabManager:
     """Manages the tabbed settings interface with AI, UI, and About tabs"""
@@ -206,14 +209,25 @@ class SettingsTabManager:
         model_label = ttk.Label(model_content, text="AI Model", style='MD3.Title.Medium.TLabel')
         model_label.pack(anchor=tk.W, pady=(0, 8))
         
-        # Model selection
-        model_combo = ttk.Combobox(model_content, textvariable=self.model_var,
+        # Model selection frame
+        model_selection_frame = MD3Frame(model_content)
+        model_selection_frame.pack(fill=tk.X, pady=(0, 8))
+        
+        # Model dropdown
+        model_combo = ttk.Combobox(model_selection_frame, textvariable=self.model_var,
                                   values=self.app.available_models,
                                   state='readonly',
                                   style='MD3.TCombobox',
                                   font=get_theme().typography['body_large'])
-        model_combo.pack(fill=tk.X)
+        model_combo.pack(side=tk.LEFT, fill=tk.X, expand=True)
         create_md3_tooltip(model_combo, "Select the Gemini model to use")
+        
+        # Refresh models button
+        refresh_btn = MD3Button(model_selection_frame, text="🔄", 
+                               command=self.refresh_available_models,
+                               style='MD3.Outline.TButton')
+        refresh_btn.pack(side=tk.RIGHT, padx=(8, 0))
+        create_md3_tooltip(refresh_btn, "Refresh available models from Google")
     
     def create_voice_settings_section(self, parent):
         """Create voice settings section"""
@@ -842,6 +856,99 @@ class SettingsTabManager:
                 messagebox.showerror("Error", 
                                    f"Failed to reset token counter: {str(e)}",
                                    parent=self.settings_window)
+    
+    def refresh_available_models(self):
+        """Refresh the list of available Google Gemini models"""
+        def refresh_in_thread():
+            try:
+                # Import genai only when needed
+                try:
+                    import google.generativeai as genai
+                except ImportError:
+                    messagebox.showwarning("Feature Unavailable", 
+                                         "Google Generative AI library not available.\n"
+                                         "Cannot refresh model list.",
+                                         parent=self.settings_window)
+                    return
+                
+                # Configure the API key
+                api_key = self.api_key_var.get().strip()
+                if not api_key:
+                    messagebox.showwarning("API Key Required", 
+                                         "Please enter your Google API key first.",
+                                         parent=self.settings_window)
+                    return
+                
+                genai.configure(api_key=api_key)
+                
+                # Get available models
+                models = []
+                try:
+                    for model in genai.list_models():
+                        if 'generateContent' in model.supported_generation_methods:
+                            model_name = model.name.replace('models/', '')
+                            if 'gemini' in model_name.lower():
+                                models.append(model_name)
+                except Exception as e:
+                    print(f"Error listing models: {e}")
+                    # Fallback to default models if API call fails
+                    models = [
+                        "gemini-2.0-flash-exp",
+                        "gemini-1.5-pro",
+                        "gemini-1.5-flash",
+                        "gemini-1.0-pro"
+                    ]
+                
+                if not models:
+                    models = [
+                        "gemini-2.0-flash-exp",
+                        "gemini-1.5-pro", 
+                        "gemini-1.5-flash",
+                        "gemini-1.0-pro"
+                    ]
+                
+                # Update the app's available models
+                self.app.available_models = sorted(models)
+                
+                # Update the combobox values
+                def update_ui():
+                    try:
+                        # Find the model combobox and update its values
+                        for widget in self.settings_window.winfo_children():
+                            self._update_combobox_values(widget, models)
+                        
+                        messagebox.showinfo("Models Refreshed", 
+                                          f"Found {len(models)} available Gemini models.",
+                                          parent=self.settings_window)
+                    except Exception as e:
+                        print(f"Error updating UI: {e}")
+                
+                # Schedule UI update on main thread
+                self.settings_window.after(0, update_ui)
+                
+            except Exception as e:
+                error_msg = f"Failed to refresh models: {str(e)}"
+                print(error_msg)
+                self.settings_window.after(0, lambda: messagebox.showerror("Refresh Failed", 
+                                                                          error_msg,
+                                                                          parent=self.settings_window))
+        
+        # Run in background thread
+        threading.Thread(target=refresh_in_thread, daemon=True).start()
+    
+    def _update_combobox_values(self, widget, models):
+        """Recursively find and update combobox values"""
+        try:
+            if isinstance(widget, ttk.Combobox) and hasattr(widget, 'configure'):
+                current_values = widget['values']
+                if current_values and any('gemini' in str(val).lower() for val in current_values):
+                    widget.configure(values=models)
+            
+            # Recursively check children
+            for child in widget.winfo_children():
+                self._update_combobox_values(child, models)
+        except Exception as e:
+            print(f"Error updating combobox: {e}")
     
     def save_settings(self):
         """Save all settings and apply changes with real-time synchronization"""
