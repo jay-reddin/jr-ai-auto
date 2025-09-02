@@ -53,8 +53,7 @@ class ChatComponent:
             style=Pack(
                 flex=1,  # Takes all remaining space between header and input
                 margin=(8, 16, 8, 16),
-                background_color=self._get_chat_bg_color(),
-                padding=8
+                background_color=self._get_chat_bg_color()
             )
         )
         
@@ -62,7 +61,7 @@ class ChatComponent:
         # This container will grow as messages are added
         self.messages_box = toga.Box(style=Pack(
             direction=COLUMN,
-            padding=8
+            margin=8
         ))
         
         # Set the messages box as the content of the scroll container

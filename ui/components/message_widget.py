@@ -77,10 +77,9 @@ class MessageWidget:
         # Create message bubble with appropriate styling
         self.message_box = toga.Box(style=Pack(
             direction=COLUMN,
-            padding=12,
+            margin=12,
             background_color=self._get_message_bg_color(),
             width=400 if not self.is_user else 350,  # Different widths for alignment
-            margin=(0, 8)
         ))
         
         # Add sender label with proper styling
@@ -260,7 +259,7 @@ class MessageWidget:
             # Create container for image
             image_container = toga.Box(style=Pack(
                 direction=COLUMN,
-                padding=20
+                margin=20
             ))
             
             # Create ImageView for full-size image

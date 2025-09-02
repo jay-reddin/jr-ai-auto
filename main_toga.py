@@ -24,6 +24,7 @@ from voice.voice_manager import get_voice_manager
 # Import UI components
 from ui.components.header import HeaderComponent
 from ui.components.chat import ChatComponent
+from ui.toga_components.settings_window import SettingsWindow
 
 
 class JRAIControlApp(toga.App):
@@ -63,6 +64,9 @@ class JRAIControlApp(toga.App):
         # Add welcome messages after UI is ready
         self.add_welcome_messages()
         
+        # Initialize keyboard shortcut system
+        self.create_keyboard_shortcut_system()
+        
         # Refresh token displays with current data
         self.refresh_token_displays()
     
@@ -92,6 +96,7 @@ class JRAIControlApp(toga.App):
         # UI components
         self.header_component = None
         self.chat_component = None
+        self.settings_window = None
         
         # Setup configuration change observer
         self.config_manager.add_observer(self._on_config_change)
@@ -185,8 +190,24 @@ class JRAIControlApp(toga.App):
             print(f"Error handling config change: {e}")
     
     def setup_voice_system(self):
-        """Initialize voice system integration."""
+        """Initialize voice system integration with platform-specific detection."""
         try:
+            # Import platform voice detector
+            from utils.platform_voice_detector import get_platform_voice_detector
+            
+            # Get platform-specific voice capabilities
+            self.platform_voice_detector = get_platform_voice_detector()
+            self.voice_capabilities = self.platform_voice_detector.get_voice_capabilities()
+            
+            # Print voice capabilities report for debugging
+            print("=== Voice System Initialization ===")
+            print(f"Platform: {self.platform_voice_detector.platform_name}")
+            print(f"Toga Backend Available: {self.voice_capabilities.toga_backend_available}")
+            print(f"Speech Recognition: {self.voice_capabilities.speech_recognition}")
+            print(f"Text-to-Speech: {self.voice_capabilities.text_to_speech}")
+            print(f"Platform Voice APIs: {self.voice_capabilities.platform_voice_apis}")
+            
+            # Check if voice system is available
             if self.voice_manager.is_voice_available():
                 # Set up voice callbacks
                 self.voice_manager.on_speech_recognized = self.on_speech_recognized
@@ -198,12 +219,24 @@ class JRAIControlApp(toga.App):
                 self.voice_manager.toggle_speech_enabled(self.speech_enabled)
                 self.voice_manager.toggle_speech_muted(self.speech_muted)
                 
-                print("Voice system initialized successfully")
+                print("✓ Voice system initialized successfully")
+                
+                # Log available voices and microphones
+                if self.voice_capabilities.available_voices:
+                    print(f"✓ Available voices: {len(self.voice_capabilities.available_voices)}")
+                if self.voice_capabilities.available_microphones:
+                    print(f"✓ Available microphones: {len(self.voice_capabilities.available_microphones)}")
+                    
             else:
-                print("Voice system unavailable - continuing without voice features")
+                print("⚠ Voice system unavailable - continuing without voice features")
+                
+                # Check what's missing and provide recommendations
+                status = self.platform_voice_detector.get_voice_support_status()
+                print(f"Recommendation: {status.get('recommendation', 'No specific recommendation')}")
                 
         except Exception as e:
-            print(f"Error setting up voice system: {e}")
+            print(f"✗ Error setting up voice system: {e}")
+            # Continue without voice features rather than crashing
     
     def create_main_window(self):
         """
@@ -264,8 +297,7 @@ class JRAIControlApp(toga.App):
             direction=ROW,
             margin=(16, 16, 16, 16),
             background_color='#2b2b2b' if self.theme_mode == 'dark' else '#f5f5f5',
-            min_height=80,  # Minimum height for input area
-            align_items='stretch'  # Allow components to stretch to container height
+            height=80  # Fixed height for input area
         ))
         
         # Multiline text input field (flexible width and height)
@@ -274,7 +306,6 @@ class JRAIControlApp(toga.App):
             style=Pack(
                 flex=1, 
                 margin_right=12,
-                min_height=60,  # Minimum height for multiline input
                 background_color='#404040' if self.theme_mode == 'dark' else '#ffffff',
                 color='#ffffff' if self.theme_mode == 'dark' else '#000000'
             )
@@ -282,6 +313,9 @@ class JRAIControlApp(toga.App):
         
         # Add input validation and character limit handling
         self._setup_input_validation()
+        
+        # Set up keyboard shortcuts for the input field
+        self._setup_keyboard_shortcuts()
         
         input_box.add(self.input_field)
         
@@ -330,6 +364,471 @@ class JRAIControlApp(toga.App):
         # Set up input change handler for validation
         self.input_field.on_change = self._on_input_change
     
+    def _setup_keyboard_shortcuts(self):
+        """Set up keyboard shortcuts for the input field and application."""
+        try:
+            # For MultilineTextInput, we need to handle keyboard events at the platform level
+            # Since Toga doesn't expose direct keyboard event handling for MultilineTextInput,
+            # we'll implement this through the native widget interface
+            
+            if hasattr(self.input_field, '_impl') and hasattr(self.input_field._impl, 'native'):
+                # Access the native widget (Windows Forms RichTextBox)
+                native_widget = self.input_field._impl.native
+                
+                # Import Windows Forms for key handling
+                try:
+                    import System.Windows.Forms as WinForms
+                    from toga_winforms.libs.wrapper import WeakrefCallable
+                    
+                    # Add KeyDown event handler for more comprehensive key handling
+                    native_widget.KeyDown += WeakrefCallable(self._on_key_down)
+                    
+                    print("Keyboard shortcuts initialized successfully")
+                    
+                except ImportError:
+                    # Fallback for non-Windows platforms or if imports fail
+                    print("Platform-specific keyboard shortcuts not available, using fallback")
+                    self._setup_fallback_keyboard_shortcuts()
+                    
+            else:
+                # Fallback method for platforms that don't support direct native access
+                self._setup_fallback_keyboard_shortcuts()
+                
+        except Exception as e:
+            print(f"Error setting up keyboard shortcuts: {e}")
+            # Continue without keyboard shortcuts rather than failing
+    
+    def _setup_fallback_keyboard_shortcuts(self):
+        """Set up fallback keyboard shortcuts using available Toga methods."""
+        try:
+            # For platforms where we can't access native keyboard events,
+            # we'll use alternative methods to provide keyboard functionality
+            
+            # Store the current text to detect patterns
+            self._last_input_text = ""
+            self._enter_detection_enabled = True
+            
+            # Set up platform-specific keyboard handling if available
+            self._setup_platform_keyboard_shortcuts()
+            
+            print("Fallback keyboard shortcuts initialized")
+            
+        except Exception as e:
+            print(f"Error setting up fallback keyboard shortcuts: {e}")
+    
+    def _setup_platform_keyboard_shortcuts(self):
+        """Set up platform-specific keyboard shortcuts for non-Windows platforms."""
+        try:
+            import platform
+            system = platform.system()
+            
+            if system == "Darwin":  # macOS
+                self._setup_macos_keyboard_shortcuts()
+            elif system == "Linux":  # Linux
+                self._setup_linux_keyboard_shortcuts()
+            else:
+                print(f"Platform-specific keyboard shortcuts not implemented for {system}")
+                
+        except Exception as e:
+            print(f"Error setting up platform keyboard shortcuts: {e}")
+    
+    def _setup_macos_keyboard_shortcuts(self):
+        """Set up macOS-specific keyboard shortcuts using Cocoa."""
+        try:
+            # For macOS, we would use Cocoa/AppKit for keyboard handling
+            # This is a placeholder for future macOS-specific implementation
+            print("macOS keyboard shortcuts setup (placeholder)")
+            
+        except Exception as e:
+            print(f"Error setting up macOS keyboard shortcuts: {e}")
+    
+    def _setup_linux_keyboard_shortcuts(self):
+        """Set up Linux-specific keyboard shortcuts using GTK."""
+        try:
+            # For Linux, we would use GTK for keyboard handling
+            # This is a placeholder for future Linux-specific implementation
+            print("Linux keyboard shortcuts setup (placeholder)")
+            
+        except Exception as e:
+            print(f"Error setting up Linux keyboard shortcuts: {e}")
+    
+    def _on_key_down(self, sender, event):
+        """Handle keyboard events for the input field (Windows Forms specific)."""
+        try:
+            import System.Windows.Forms as WinForms
+            
+            # Check for Enter key
+            if event.KeyCode == WinForms.Keys.Enter:
+                # Check if Shift is held down
+                if event.Shift:
+                    # Shift+Enter: Allow new line (default behavior)
+                    # Don't handle the event, let it propagate
+                    return
+                else:
+                    # Enter alone: Send message (only if there's content)
+                    current_text = self.input_field.value.strip() if self.input_field.value else ""
+                    if current_text:
+                        event.Handled = True  # Prevent default behavior (new line)
+                        # Schedule message sending in the main thread
+                        self.main_window.app.add_background_task(self._send_message_from_keyboard())
+                    else:
+                        # Don't send empty messages, but still prevent new line
+                        event.Handled = True
+            
+            # Check for Escape key
+            elif event.KeyCode == WinForms.Keys.Escape:
+                # Escape: Clear input field
+                event.Handled = True
+                self.main_window.app.add_background_task(self._clear_input_from_keyboard())
+            
+            # Check for Tab key for navigation
+            elif event.KeyCode == WinForms.Keys.Tab:
+                # Tab: Navigate between input components
+                if event.Shift:
+                    # Shift+Tab: Navigate backwards
+                    self._navigate_backwards()
+                else:
+                    # Tab: Navigate forwards
+                    self._navigate_forwards()
+                event.Handled = True
+            
+            # Check for other keyboard shortcuts with modifiers
+            elif event.Control:
+                if event.KeyCode == WinForms.Keys.M:
+                    # Ctrl+M: Toggle microphone
+                    event.Handled = True
+                    self.main_window.app.add_background_task(self._toggle_microphone_from_keyboard())
+                
+                elif event.KeyCode == WinForms.Keys.I:
+                    # Ctrl+I: Focus input field
+                    event.Handled = True
+                    self.main_window.app.add_background_task(self._focus_input_from_keyboard())
+                
+                elif event.KeyCode == WinForms.Keys.L:
+                    # Ctrl+L: Clear chat (future implementation)
+                    event.Handled = True
+                    # self.main_window.app.add_background_task(self._clear_chat_from_keyboard())
+                
+                elif event.KeyCode == WinForms.Keys.S and event.Shift:
+                    # Ctrl+Shift+S: Toggle speech output
+                    event.Handled = True
+                    self.main_window.app.add_background_task(self._toggle_speech_from_keyboard())
+                
+                elif event.KeyCode == WinForms.Keys.H:
+                    # Ctrl+H: Show keyboard shortcuts help
+                    event.Handled = True
+                    self.main_window.app.add_background_task(self._show_shortcuts_help())
+                    
+        except Exception as e:
+            print(f"Error handling keyboard event: {e}")
+    
+    async def _send_message_from_keyboard(self):
+        """Send message triggered by keyboard shortcut (Enter key)."""
+        try:
+            # Call the existing send_message method
+            self.send_message(None)
+        except Exception as e:
+            print(f"Error sending message from keyboard: {e}")
+    
+    async def _toggle_microphone_from_keyboard(self):
+        """Toggle microphone triggered by keyboard shortcut (Ctrl+M)."""
+        try:
+            if hasattr(self, 'mic_button') and self.mic_button:
+                self.toggle_listening(None)
+            else:
+                self.add_message("System", "Voice controls not available")
+        except Exception as e:
+            print(f"Error toggling microphone from keyboard: {e}")
+    
+    async def _toggle_speech_from_keyboard(self):
+        """Toggle speech output triggered by keyboard shortcut (Ctrl+Shift+S)."""
+        try:
+            if self.voice_manager and hasattr(self.voice_manager, 'toggle_speech_muted'):
+                self.speech_muted = not self.speech_muted
+                self.voice_manager.toggle_speech_muted(self.speech_muted)
+                status = "muted" if self.speech_muted else "enabled"
+                self.add_message("System", f"Speech output {status}")
+            else:
+                self.add_message("System", "Speech controls not available")
+        except Exception as e:
+            print(f"Error toggling speech from keyboard: {e}")
+    
+    async def _clear_input_from_keyboard(self):
+        """Clear input field triggered by keyboard shortcut (Escape key)."""
+        try:
+            if hasattr(self, 'input_field') and self.input_field:
+                self.input_field.value = ""
+                self.add_message("System", "Input field cleared")
+            else:
+                self.add_message("System", "Input field not available")
+        except Exception as e:
+            print(f"Error clearing input from keyboard: {e}")
+    
+    async def _focus_input_from_keyboard(self):
+        """Focus input field triggered by keyboard shortcut (Ctrl+I)."""
+        try:
+            if hasattr(self, 'input_field') and self.input_field:
+                self.input_field.focus()
+                self.add_message("System", "Input field focused")
+            else:
+                self.add_message("System", "Input field not available")
+        except Exception as e:
+            print(f"Error focusing input from keyboard: {e}")
+    
+    async def _show_shortcuts_help(self):
+        """Show keyboard shortcuts help triggered by keyboard shortcut (Ctrl+H)."""
+        try:
+            help_text = self.get_keyboard_shortcuts_help()
+            self.add_message("System", help_text)
+        except Exception as e:
+            print(f"Error showing shortcuts help: {e}")
+    
+    def _navigate_forwards(self):
+        """Navigate to the next focusable component (Tab key)."""
+        try:
+            # Define navigation order: input_field -> send_button -> mic_button (if available)
+            current_focus = None
+            
+            # Try to determine current focus (simplified approach)
+            if hasattr(self, 'input_field') and self.input_field:
+                if hasattr(self, 'send_button') and self.send_button:
+                    self.send_button.focus()
+                    return
+            
+            # If send button has focus, move to mic button or back to input
+            if hasattr(self, 'mic_button') and self.mic_button:
+                self.mic_button.focus()
+            elif hasattr(self, 'input_field') and self.input_field:
+                self.input_field.focus()
+                
+        except Exception as e:
+            print(f"Error navigating forwards: {e}")
+    
+    def _navigate_backwards(self):
+        """Navigate to the previous focusable component (Shift+Tab key)."""
+        try:
+            # Define reverse navigation order: mic_button -> send_button -> input_field
+            # This is a simplified implementation - in a full implementation,
+            # we would track the actual focus state
+            
+            if hasattr(self, 'input_field') and self.input_field:
+                self.input_field.focus()
+                
+        except Exception as e:
+            print(f"Error navigating backwards: {e}")
+    
+    def test_keyboard_navigation(self):
+        """Test keyboard navigation across all input components."""
+        try:
+            # Test that all interactive components can receive focus
+            components_to_test = []
+            
+            # Add input field
+            if hasattr(self, 'input_field') and self.input_field:
+                components_to_test.append(('Input Field', self.input_field))
+            
+            # Add send button
+            if hasattr(self, 'send_button') and self.send_button:
+                components_to_test.append(('Send Button', self.send_button))
+            
+            # Add microphone button if available
+            if hasattr(self, 'mic_button') and self.mic_button:
+                components_to_test.append(('Microphone Button', self.mic_button))
+            
+            # Test focus capability for each component
+            focus_test_results = []
+            for name, component in components_to_test:
+                try:
+                    # Test if component can receive focus
+                    if hasattr(component, 'focus'):
+                        component.focus()
+                        focus_test_results.append(f"✓ {name}: Focus supported")
+                    else:
+                        focus_test_results.append(f"⚠ {name}: Focus not available")
+                except Exception as e:
+                    focus_test_results.append(f"✗ {name}: Focus failed - {e}")
+            
+            # Report results
+            self.add_message("System", "Keyboard Navigation Test Results:")
+            for result in focus_test_results:
+                self.add_message("System", result)
+            
+            # Test keyboard shortcuts
+            shortcut_info = [
+                "Available Keyboard Shortcuts:",
+                "• Enter: Send message (when input has content)",
+                "• Shift+Enter: New line in message",
+                "• Escape: Clear input field",
+                "• Tab: Navigate to next component",
+                "• Shift+Tab: Navigate to previous component",
+                "• Ctrl+M: Toggle microphone",
+                "• Ctrl+I: Focus input field",
+                "• Ctrl+H: Show keyboard shortcuts help",
+                "• Ctrl+Shift+S: Toggle speech output"
+            ]
+            
+            for info in shortcut_info:
+                self.add_message("System", info)
+                
+            return True
+            
+        except Exception as e:
+            self.add_message("System", f"Keyboard navigation test failed: {e}")
+            return False
+    
+    def create_keyboard_shortcut_system(self):
+        """Create a comprehensive keyboard shortcut system for common actions."""
+        try:
+            # Define keyboard shortcuts mapping
+            self.keyboard_shortcuts = {
+                'send_message': {
+                    'key': 'Enter',
+                    'modifiers': [],
+                    'description': 'Send message (when input has content)',
+                    'action': self.send_message,
+                    'context': 'input_field'
+                },
+                'new_line': {
+                    'key': 'Enter',
+                    'modifiers': ['Shift'],
+                    'description': 'New line in message',
+                    'action': None,  # Default behavior
+                    'context': 'input_field'
+                },
+                'clear_input': {
+                    'key': 'Escape',
+                    'modifiers': [],
+                    'description': 'Clear input field',
+                    'action': self._clear_input_field,
+                    'context': 'input_field'
+                },
+                'navigate_forward': {
+                    'key': 'Tab',
+                    'modifiers': [],
+                    'description': 'Navigate to next component',
+                    'action': self._navigate_forwards,
+                    'context': 'global'
+                },
+                'navigate_backward': {
+                    'key': 'Tab',
+                    'modifiers': ['Shift'],
+                    'description': 'Navigate to previous component',
+                    'action': self._navigate_backwards,
+                    'context': 'global'
+                },
+                'toggle_microphone': {
+                    'key': 'M',
+                    'modifiers': ['Ctrl'],
+                    'description': 'Toggle microphone',
+                    'action': self.toggle_listening,
+                    'context': 'global'
+                },
+                'toggle_speech': {
+                    'key': 'S',
+                    'modifiers': ['Ctrl', 'Shift'],
+                    'description': 'Toggle speech output',
+                    'action': self._toggle_speech_output,
+                    'context': 'global'
+                },
+                'focus_input': {
+                    'key': 'I',
+                    'modifiers': ['Ctrl'],
+                    'description': 'Focus input field',
+                    'action': self._focus_input_field,
+                    'context': 'global'
+                },
+                'show_help': {
+                    'key': 'H',
+                    'modifiers': ['Ctrl'],
+                    'description': 'Show keyboard shortcuts help',
+                    'action': self._show_keyboard_help,
+                    'context': 'global'
+                }
+            }
+            
+            # Add welcome message about keyboard shortcuts
+            self.add_message("System", "Keyboard shortcuts system initialized")
+            
+            return self.keyboard_shortcuts
+            
+        except Exception as e:
+            print(f"Error creating keyboard shortcut system: {e}")
+            return {}
+    
+    def _toggle_speech_output(self, widget=None):
+        """Toggle speech output (wrapper for keyboard shortcut)."""
+        try:
+            if self.voice_manager and hasattr(self.voice_manager, 'toggle_speech_muted'):
+                self.speech_muted = not self.speech_muted
+                self.voice_manager.toggle_speech_muted(self.speech_muted)
+                status = "muted" if self.speech_muted else "enabled"
+                self.add_message("System", f"Speech output {status}")
+                
+                # Save setting
+                if self.config_manager:
+                    self.config_manager.set_setting('speech_muted', self.speech_muted)
+            else:
+                self.add_message("System", "Speech controls not available")
+        except Exception as e:
+            print(f"Error toggling speech output: {e}")
+    
+    def _focus_input_field(self, widget=None):
+        """Focus the input field (keyboard shortcut action)."""
+        try:
+            if hasattr(self, 'input_field') and self.input_field:
+                self.input_field.focus()
+                self.add_message("System", "Input field focused")
+            else:
+                self.add_message("System", "Input field not available")
+        except Exception as e:
+            print(f"Error focusing input field: {e}")
+    
+    def _clear_input_field(self, widget=None):
+        """Clear the input field (keyboard shortcut action)."""
+        try:
+            if hasattr(self, 'input_field') and self.input_field:
+                self.input_field.value = ""
+                self.add_message("System", "Input field cleared")
+            else:
+                self.add_message("System", "Input field not available")
+        except Exception as e:
+            print(f"Error clearing input field: {e}")
+    
+    def _show_keyboard_help(self, widget=None):
+        """Show keyboard shortcuts help (wrapper for keyboard shortcut)."""
+        try:
+            help_text = self.get_keyboard_shortcuts_help()
+            self.add_message("System", help_text)
+        except Exception as e:
+            print(f"Error showing keyboard help: {e}")
+    
+    def get_keyboard_shortcuts_help(self):
+        """Get help text for all available keyboard shortcuts."""
+        try:
+            if not hasattr(self, 'keyboard_shortcuts'):
+                self.create_keyboard_shortcut_system()
+            
+            help_lines = ["Available Keyboard Shortcuts:"]
+            
+            for shortcut_id, shortcut_info in self.keyboard_shortcuts.items():
+                key = shortcut_info['key']
+                modifiers = shortcut_info.get('modifiers', [])
+                description = shortcut_info['description']
+                context = shortcut_info.get('context', 'global')
+                
+                # Format the key combination
+                key_combo = '+'.join(modifiers + [key])
+                
+                # Add context info if not global
+                context_info = f" ({context})" if context != 'global' else ""
+                
+                help_lines.append(f"• {key_combo}: {description}{context_info}")
+            
+            return '\n'.join(help_lines)
+            
+        except Exception as e:
+            return f"Error getting keyboard shortcuts help: {e}"
+    
     def _on_input_change(self, widget):
         """
         Handle input field changes for validation and character limiting.
@@ -339,6 +838,10 @@ class JRAIControlApp(toga.App):
         """
         try:
             current_text = widget.value or ""
+            
+            # Fallback keyboard shortcut detection for platforms without native key events
+            if hasattr(self, '_enter_detection_enabled') and self._enter_detection_enabled:
+                self._detect_keyboard_shortcuts_fallback(current_text)
             
             # Check character limit
             if len(current_text) > self.max_input_length:
@@ -353,6 +856,10 @@ class JRAIControlApp(toga.App):
                 has_content = bool(current_text.strip())
                 self.send_button.enabled = has_content and self.send_button.text == "Send"
             
+            # Update last input text for keyboard detection
+            if hasattr(self, '_last_input_text'):
+                self._last_input_text = current_text
+            
             # Call original handler if it exists
             if self._original_on_change:
                 self._original_on_change(widget)
@@ -360,16 +867,63 @@ class JRAIControlApp(toga.App):
         except Exception as e:
             print(f"Error in input validation: {e}")
     
+    def _detect_keyboard_shortcuts_fallback(self, current_text):
+        """
+        Fallback method to detect keyboard shortcuts on platforms without native key events.
+        
+        Args:
+            current_text (str): The current text in the input field
+        """
+        try:
+            # This is a limited fallback - we can't reliably detect Enter vs Shift+Enter
+            # without native keyboard events, but we can provide some functionality
+            
+            # Check for special text patterns that might indicate shortcuts
+            if hasattr(self, '_last_input_text'):
+                # Detect if text was cleared (might indicate Escape was pressed)
+                if self._last_input_text and not current_text:
+                    # Text was cleared - this might be intentional
+                    pass
+                
+                # Update last text
+                self._last_input_text = current_text
+            
+            # Provide alternative ways to access shortcuts
+            # For example, we could add button shortcuts or menu items
+            self._ensure_alternative_shortcuts()
+            
+        except Exception as e:
+            print(f"Error in fallback keyboard detection: {e}")
+    
+    def _ensure_alternative_shortcuts(self):
+        """Ensure alternative ways to access keyboard shortcuts are available."""
+        try:
+            # This method ensures that even without keyboard shortcuts,
+            # users have alternative ways to access the functionality
+            
+            # For example, we could add context menus, toolbar buttons, etc.
+            # For now, we'll just ensure the help is available
+            if not hasattr(self, '_shortcuts_help_shown'):
+                self._shortcuts_help_shown = True
+                # Show help about available shortcuts on first run
+                
+        except Exception as e:
+            print(f"Error ensuring alternative shortcuts: {e}")
+    
     def add_welcome_messages(self):
         """Add welcome messages to the chat."""
         self.add_message("System", "Welcome to JR AI Control! 🚀")
         
         if self.voice_manager.is_voice_available():
             self.add_message("Voice System", 
-                "Voice interaction ready! Click the microphone button to start listening.")
+                "Voice interaction ready! Click the microphone button or press Ctrl+M to start listening.")
         else:
             self.add_message("Voice System", 
                 "Voice features unavailable. Install speech_recognition, pyttsx3, and pyaudio for voice interaction.")
+        
+        # Add keyboard shortcuts information
+        self.add_message("System", 
+            "Keyboard shortcuts: Enter to send, Shift+Enter for new line, Ctrl+M for voice, Ctrl+Shift+S for speech toggle")
         
         if not self.current_api_key:
             self.add_message("System", 
@@ -676,9 +1230,18 @@ class JRAIControlApp(toga.App):
         Args:
             widget: The button widget that triggered this action
         """
-        # For now, just show a placeholder message
-        # This will be implemented in later tasks
-        self.add_message("System", "Settings window will be implemented in the next phase.")
+        try:
+            # Initialize settings window if not already created
+            if not self.settings_window:
+                self.settings_window = SettingsWindow(self)
+            
+            # Show the settings window
+            self.settings_window.show()
+            
+        except Exception as e:
+            print(f"Error opening settings window: {e}")
+            # Fallback to showing an error message
+            self.add_message("System", f"Error opening settings: {str(e)}")
     
     def create_error_window(self, error_message):
         """

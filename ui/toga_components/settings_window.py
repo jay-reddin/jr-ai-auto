@@ -38,11 +38,9 @@ class SettingsWindow:
             
         except Exception as e:
             print(f"Error showing settings window: {e}")
-            # Show error dialog as fallback
-            self.app.main_window.error_dialog(
-                "Settings Error",
-                f"Failed to open settings window: {e}"
-            )
+            # Show error message as fallback
+            if hasattr(self.app, 'add_message'):
+                self.app.add_message("System", f"Failed to open settings window: {e}")
     
     def _create_window(self):
         """Create the settings window and its content"""
@@ -51,7 +49,7 @@ class SettingsWindow:
             self.window = toga.Window(
                 title="Settings - JR AI Control",
                 size=(600, 500),
-                resizeable=True
+                resizable=True
             )
             
             # Create main container
@@ -234,8 +232,8 @@ class SettingsWindow:
         font_section.add(font_label)
         
         self.font_size_slider = toga.Slider(
-            range=(10, 24),
-            tick_count=15,
+            min_value=10,
+            max_value=24,
             style=Pack(width=300, padding=(0, 0, 10, 0))
         )
         font_section.add(self.font_size_slider)
@@ -352,7 +350,7 @@ class SettingsWindow:
         try:
             # Load API key
             if self.api_key_input:
-                self.api_key_input.value = self.app.api_key or ""
+                self.api_key_input.value = self.app.current_api_key or ""
             
             # Load model selection
             if self.model_selection:
@@ -381,7 +379,7 @@ class SettingsWindow:
         try:
             # Save API key
             if self.api_key_input:
-                self.app.api_key = self.api_key_input.value.strip()
+                self.app.current_api_key = self.api_key_input.value.strip()
             
             # Save model selection
             if self.model_selection:
@@ -389,9 +387,9 @@ class SettingsWindow:
             
             # Save theme selection
             if self.theme_selection and self.theme_selection.value != self.app.theme_mode:
-                self.app.theme_mode = self.theme_selection.value
-                if self.app.theme_manager:
-                    self.app.theme_manager.switch_theme(self.theme_selection.value)
+                # Use the existing toggle_theme method to change theme
+                if self.theme_selection.value != self.app.theme_mode:
+                    self.app.toggle_theme(None)
             
             # Save font size
             if self.font_size_slider:
@@ -411,20 +409,23 @@ class SettingsWindow:
             # Save configuration
             self.app.save_configuration()
             
+            # Reinitialize agent if API key was changed
+            if self.api_key_input and self.api_key_input.value.strip():
+                if hasattr(self.app, 'initialize_agent'):
+                    self.app.initialize_agent()
+            
             # Update header display
-            if hasattr(self.app, 'main_window') and self.app.main_window.header_component:
-                self.app.main_window.header_component.update_model_display(self.app.current_model)
-                self.app.main_window.header_component.update_connection_status(bool(self.app.api_key))
+            if hasattr(self.app, 'header_component') and self.app.header_component:
+                self.app.header_component.update_model_display(self.app.current_model)
+                self.app.header_component.update_connection_status(bool(self.app.current_api_key))
             
             # Close window
             self.window.close()
             
         except Exception as e:
             print(f"Error saving settings: {e}")
-            self.app.main_window.error_dialog(
-                "Save Error",
-                f"Failed to save settings: {e}"
-            )
+            if hasattr(self.app, 'add_message'):
+                self.app.add_message("System", f"Failed to save settings: {e}")
     
     def _cancel_settings(self, widget):
         """Cancel settings changes and close window"""
