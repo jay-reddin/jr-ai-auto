@@ -1,0 +1,54 @@
+# Toga GUI Framework and Platform Backends
+toga>=0.4.0
+toga-winforms>=0.4.0  # Windows backend
+toga-gtk>=0.4.0       # Linux backend  
+toga-cocoa>=0.4.0     # macOS backend
+
+# Core LangChain packages for Gemini integration (preserved from original)
+langchain==0.2.11
+langchain-core==0.2.25
+langchain-google-genai==1.0.8
+langchain-experimental==0.0.62
+
+# Google Generative AI packages (preserved from original)
+google-generativeai==0.7.2
+google-ai-generativelanguage==0.6.6
+
+# Essential Google API dependencies (preserved from original)
+google-api-core==2.19.1
+google-auth==2.32.0
+googleapis-common-protos==1.63.2
+proto-plus==1.24.0
+protobuf==4.25.4
+
+# Automation packages (preserved from original)
+pyautogui==0.9.54
+pillow>=8.0.0
+
+# Core Python dependencies (preserved from original)
+pydantic==2.8.2
+pydantic_core==2.20.1
+python-dotenv==1.0.1
+requests==2.32.3
+typing_extensions==4.12.2
+
+# Network and HTTP dependencies (preserved from original)
+httpx==0.27.0
+certifi==2024.7.4
+urllib3==2.2.2
+
+# Utility packages (preserved from original)
+packaging==24.1
+tenacity==8.5.0
+PyYAML==6.0.1
+
+# Token counting for usage tracking (preserved from original)
+tiktoken==0.7.0
+
+# Voice interaction dependencies (preserved from original)
+speechrecognition==3.10.0
+pyttsx3==2.90
+pyaudio==0.2.11
+
+# Cross-platform notification system (replacing win10toast with plyer for cross-platform support)
+plyer==2.1.0

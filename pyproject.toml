@@ -1,0 +1,98 @@
+[build-system]
+requires = ["briefcase"]
+
+[tool.briefcase]
+project_name = "JR AI Control"
+bundle = "com.jraicontrol"
+version = "1.0.0"
+url = "https://github.com/jraicontrol/toga-app"
+license = "MIT"
+author = "JR AI Control Team"
+author_email = "contact@jraicontrol.com"
+
+description = "Cross-platform AI control application built with Toga"
+long_description = """
+JR AI Control is a modern, cross-platform AI assistant application that provides
+voice interaction, screenshot capabilities, and intelligent conversation management.
+Built with Toga for native performance across Windows, macOS, and Linux.
+"""
+
+[tool.briefcase.app.jraicontrol]
+formal_name = "JR AI Control"
+description = "Cross-platform AI control application"
+icon = "resources/icon"
+sources = [
+    "main_toga",
+    "utils",
+    "ui", 
+    "voice"
+]
+requires = [
+    "toga>=0.4.0",
+    "langchain==0.2.11",
+    "langchain-core==0.2.25", 
+    "langchain-google-genai==1.0.8",
+    "google-generativeai==0.7.2",
+    "pyautogui==0.9.54",
+    "pillow>=8.0.0",
+    "pydantic==2.8.2",
+    "python-dotenv==1.0.1",
+    "requests==2.32.3",
+    "tiktoken==0.7.0",
+    "speechrecognition==3.10.0",
+    "pyttsx3==2.90",
+    "pyaudio==0.2.11",
+    "plyer==2.1.0"
+]
+
+[tool.briefcase.app.jraicontrol.macOS]
+requires = [
+    "toga-cocoa>=0.4.0"
+]
+
+[tool.briefcase.app.jraicontrol.linux]
+requires = [
+    "toga-gtk>=0.4.0"
+]
+
+[tool.briefcase.app.jraicontrol.windows]
+requires = [
+    "toga-winforms>=0.4.0"
+]
+
+# System packages that need to be installed
+[tool.briefcase.app.jraicontrol.linux.system.debian]
+system_requires = [
+    "libgirepository1.0-dev",
+    "libcairo2-dev", 
+    "libpango1.0-dev",
+    "libgdk-pixbuf2.0-dev",
+    "libgtk-3-dev",
+    "portaudio19-dev"
+]
+
+[tool.briefcase.app.jraicontrol.linux.system.rhel]
+system_requires = [
+    "gobject-introspection-devel",
+    "cairo-devel",
+    "pango-devel", 
+    "gdk-pixbuf2-devel",
+    "gtk3-devel",
+    "portaudio-devel"
+]
+
+[tool.briefcase.app.jraicontrol.linux.system.arch]
+system_requires = [
+    "gobject-introspection",
+    "cairo",
+    "pango",
+    "gdk-pixbuf2", 
+    "gtk3",
+    "portaudio"
+]
+
+[tool.briefcase.app.jraicontrol.windows.system]
+system_requires = []
+
+[tool.briefcase.app.jraicontrol.macOS.system]
+system_requires = []
