@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "api_key": "",
   "model": "gemini-2.0-flash-exp",
-  "theme_mode": "light",
+  "theme_mode": "dark",
   "font_size": 14,
   "window_opacity": 1.0,
   "speech_enabled": true,
@@ -18,5 +18,5 @@
   "backup_enabled": true,
   "max_backups": 5,
   "created_at": "2025-09-02T09:09:25.550868",
-  "last_modified": "2025-09-02T10:30:22.582109"
+  "last_modified": "2025-09-02T10:16:52.344173"
 }

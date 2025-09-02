@@ -46,3 +46,13 @@ pyaudio==0.2.11
 # Notification system dependencies
 plyer==2.1.0
 win10toast==0.9
+
+# Toga GUI framework and platform backends
+toga>=0.4.0
+toga-core>=0.4.0
+toga-winforms>=0.4.0; sys_platform == "win32"
+toga-gtk>=0.4.0; sys_platform == "linux"
+toga-cocoa>=0.4.0; sys_platform == "darwin"
+
+# Build system for Toga applications
+briefcase>=0.3.0
