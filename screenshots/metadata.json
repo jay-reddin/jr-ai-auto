@@ -90,5 +90,20 @@
     "scale_factor": 0.10980966325036604,
     "resampling_method": "2",
     "save_quality": 80
+  },
+  "6fbcc83a-387c-4ac6-9012-6407431c3a6b": {
+    "original_path": "screenshot.png",
+    "thumbnail_path": "screenshots\\thumbnails\\6fbcc83a-387c-4ac6-9012-6407431c3a6b_medium.jpg",
+    "thumbnail_size": "medium",
+    "dimensions": [
+      150,
+      84
+    ],
+    "created_at": "2025-09-02T03:02:48.147745",
+    "file_size": 3835,
+    "generation_time": 0.24077200889587402,
+    "scale_factor": 0.10980966325036604,
+    "resampling_method": "2",
+    "save_quality": 80
   }
 }
